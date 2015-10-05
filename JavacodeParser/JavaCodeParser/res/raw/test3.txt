@@ -1,0 +1,44 @@
+package com.yqs.javacodeparser.token;
+
+import com.yqs.javacodeparser.style.SyntaxColorStyle;
+
+
+public class Token {
+	
+	private int    offset;
+	private int    length;
+	private String name;
+	
+        //Token style
+	private SyntaxColorStyle style;
+	
+	public Token(int offset, int length, String name, SyntaxColorStyle style){
+		super();
+		this.offset   = offset;
+		this.length   = length;
+		this.name     = name;
+		this.style    = style;
+	}
+	
+	public void increaseLength(){
+		this.length++;
+	}
+	
+	public SyntaxColorStyle getStyle(){
+		return style;
+	}
+	
+	/**
+	 * shift Token
+	 * @param shiftSize
+	 * @return
+	 */
+	public boolean shift(int shiftSize){
+		if(this.offset+shiftSize<0){
+			return false;
+		}
+		this.offset += shiftSize;
+		return true;
+	}
+	
+}

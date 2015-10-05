@@ -1,0 +1,37 @@
+package syntaxcolor.v4;
+
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.io.*;
+
+public class DemoFrame {
+
+  private JFrame      jFrame            = null;
+
+  /* test
+    test*/
+  private JPanel      jContentPane      = null;
+
+  /**
+   * Main Method
+   * 
+   * @param args
+   */
+  public static void main(String[] args) {
+    // TODO Auto-generated method stub
+
+    String string = new String("Hello");
+    char ch = 'c';
+    SwingUtilities.invokeLater(new Runnable() {
+
+      public void run() {
+        DemoFrame application = new DemoFrame();
+        application.addSyntaxColor();
+        application.getJFrame().setVisible(true);
+      }
+    });
+  }
+}
+

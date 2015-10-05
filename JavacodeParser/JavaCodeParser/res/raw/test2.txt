@@ -1,0 +1,75 @@
+package com.yqs.javacodeparser;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
+
+
+/**
+ * MainActivity
+ * 
+ * @author YangQingshuai
+ *
+ */
+public class MainActivity extends Activity {
+
+	private EditText editText = null;
+	
+	private SyntaxColorPainter syntaxColorPainter = null;
+	
+	private static int OPEN_FILEDIALOG_ID = 0;
+	
+	private Button openButton = null;
+	
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+    	
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        
+        openButton = (Button)findViewById(R.id.Open);
+        openButton.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View arg0) {
+				// TODO Auto-generated method stub
+				showDialog(OPEN_FILEDIALOG_ID);
+			}
+		});
+        
+        editText = (EditText)findViewById(R.id.Coder);
+        DisplayMetrics dm = new DisplayMetrics();
+        
+        /*this.getWindowManager().
+          getDefaultDisplay().getMetrics(dm);*/
+        addSyntaxColor();
+    }
+     
+    private IRule[] buildJavaRules(){
+	
+    	return new IRule[] {
+    			
+    			RuleFactory.createMultiLineIRule("javadoc", "/**", "*/", javaDocStyle, "/**/"),
+    			RuleFactory.createMultiLineIRule("comment", "/*", "*/", commentStyle),
+    			
+    			RuleFactory.createSingleLineRule("string", "\"", "\"", '\\', stringStyle),
+    			RuleFactory.createSingleLineRule("string",  "\'", "\'", '\\', stringStyle),
+    			RuleFactory.createSingleLineRule("comment", "//", commentStyle),
+    			
+    			RuleFactory.createKeywordRule("keyword", true, keywordStyle, new String[] {
+    					"abstract", "boolean", "break", "byte", "case",
+    	                "catch", "char", "class", "continue", "default", "do",
+    	                "double", "else", "extends", "false", "final", "finally",
+    	                "float", "for", "if", "implements", "import", "instanceof",
+    	                "int", "interface", "long", "native", "new", "null", "package",
+    	                "private", "protected", "public", "return", "short", "static",
+    	                "super", "switch", "synchronized", "this", "throw", "throws",
+    	                "transient", "true", "try", "void", "volatile", "while"
+    			})};
+    }
+}

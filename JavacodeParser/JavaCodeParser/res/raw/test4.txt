@@ -1,0 +1,172 @@
+package com.yqs.javacodeparser.syntaxcolor;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import android.text.Editable;
+import android.text.Spanned;
+import android.text.TextWatcher;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.StyleSpan;
+import android.widget.EditText;
+
+/**
+ * 
+ * @author yqs
+ *
+ */
+public class SyntaxColorPainter {
+
+	public static final String DEFAULT       = "default";
+	
+	private SyntaxColorStyle   defaultStyle  = StyleFactory.fromDefault();
+	
+	private EditText           editText       = null;
+	
+	private List<Token>        tokenList      = new ArrayList<Token>();
+	
+	private Scanner            scanner        = null;
+	
+	private List<IRule>        rules          = new ArrayList<IRule>(); 
+	
+	public SyntaxColorPainter(EditText teditText){
+		
+		this.editText = teditText;
+		
+		/*scanner = new Scanner();*/
+		
+		editText.addTextChangedListener(new TextWatcher() {
+			
+			private int offset = 0;
+			private int length = 0;
+			
+			@Override
+			public void beforeTextChanged(CharSequence arg0, int arg1, int arg2,int arg3) {	
+
+				
+				offset = arg1;
+				if(arg3!=0){
+					length = arg3;
+				}
+				else {
+					length = -arg2;
+				}
+			}
+			
+			@Override
+			public void onTextChanged(CharSequence arg0, int arg1, int arg2, int arg3) {
+				
+			}
+			
+			@Override
+			public void afterTextChanged(Editable code) {
+				
+				processPaint(code, offset, length);
+				
+				for(Token token : tokenList){
+					code.setSpan(new ForegroundColorSpan(token.getStyle().getForeground()), 
+							token.getOffset(), token.getOffset()+token.getLength(), Spanned.SPAN_INTERMEDIATE);
+					int bold = (token.getStyle().isBold() == true) ? 1 : 0;
+					code.setSpan(new StyleSpan(bold), 
+							token.getOffset(), token.getOffset()+token.getLength(), Spanned.SPAN_INTERMEDIATE);
+				}
+			}
+		});
+	}
+	
+	public void processPaint(Editable code, final int startOffset, final int shift){
+		
+		Token firstAffectToken = null;
+		int index = 0;
+		
+		for(Token t : tokenList){
+			//modify
+			if(t.getOffset() < startOffset && t.getOffset() + t.getLength() > startOffset){
+				firstAffectToken = t;
+				break;
+			}
+			if(t.getOffset()==startOffset && index > 0){
+				firstAffectToken = tokenList.get(--index);
+				break;
+			}
+			
+			++index;
+		}//for(t)
+		
+		//append
+		if(null == firstAffectToken){
+			index = 0;
+			firstAffectToken = new Token(0, 0, DEFAULT, defaultStyle);
+		}
+		
+		final Token fromToken = firstAffectToken;
+		final int fromIndex = index;
+		
+		//first
+		setSyntaxColor(code, fromToken, fromIndex, shift);
+	}
+	
+	protected void setSyntaxColor(Editable code, Token starToken, int affectIndex, int shift) {
+		
+		Token defauToken = new Token(starToken.getOffset(), 0, DEFAULT, defaultStyle);
+		
+		scanner.setTarget(code);
+		scanner.setOffset(defauToken.getOffset());
+		
+		List<Token> newList = new ArrayList<Token>();
+		
+		
+		for(int i = 0; i < affectIndex; ++i){
+			newList.add(tokenList.get(i));
+		}
+		
+		Token newToken = null;
+		boolean matched = false;
+		
+		while(scanner.hasMoreChar()){
+			matched = false;
+			
+			for(IRule rule : rules){
+				newToken = rule.evaluate(scanner);
+				if(null != newToken){
+					if(defauToken.getLength() > 0){
+						if(isExists(newList, affectIndex, defauToken, shift)){
+							return;
+						}
+						paintToken(defauToken); 
+						newList.add(defauToken);
+					}
+					if(isExists(newList, affectIndex, defauToken, shift)){
+						return;
+					}
+					paintToken(newToken);
+					newList.add(newToken);
+					matched = true;
+					break;
+				}
+			}//for()
+			
+			if(matched){
+				defauToken = new Token(scanner.getOffset(), 0, DEFAULT, defaultStyle);
+			}
+			else{
+				defauToken.increaseLength();
+				scanner.read();
+			}
+		}//while()
+		
+		if(defauToken.getLength() > 0){
+			paintToken(defauToken);
+			newList.add(defauToken);
+		}
+		
+		tokenList = newList;
+	}
+	
+	
+	public void addRule(IRule... paramIRules){
+		for(IRule rule : paramIRules){
+			this.rules.add(rule);
+		}
+	}
+}
